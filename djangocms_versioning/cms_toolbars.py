@@ -28,7 +28,8 @@ from djangocms_versioning import conf
 from djangocms_versioning.constants import PUBLISHED
 from djangocms_versioning.helpers import (
     get_latest_admin_viewable_page_content,
-    version_list_url, get_preview_url,
+    get_preview_url,
+    version_list_url,
 )
 from djangocms_versioning.models import Version
 
@@ -184,8 +185,8 @@ class VersioningToolbar(PlaceholderToolbar):
             # Show up to conf.EXTENDED_MENU previous versions of the object
             versions = self._get_all_versions()
             nearby_versions = versions \
-                                  .annotate(vicinity=(F("pk") - version.pk) * (F("pk") - version.pk)) \
-                                  .order_by("vicinity")[:conf.EXTENDED_MENU]
+                .annotate(vicinity=(F("pk") - version.pk) * (F("pk") - version.pk)) \
+                .order_by("vicinity")[:conf.EXTENDED_MENU]
             if len(nearby_versions) > 1:
                 submenu = versioning_menu.get_or_create_menu(f"{VERSIONING_MENU_IDENTIFIER}-list", _("View version"))
                 for v in sorted(nearby_versions, key=lambda x: -x.pk):
