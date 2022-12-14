@@ -23,10 +23,11 @@ from cms.utils.conf import get_cms_setting
 from cms.utils.i18n import get_language_dict, get_language_tuple
 from cms.utils.urlutils import add_url_parameters, admin_reverse
 
+from djangocms_versioning import conf
 from djangocms_versioning.constants import PUBLISHED
 from djangocms_versioning.helpers import (
     get_latest_admin_viewable_page_content,
-    version_list_url,
+    version_list_url, get_preview_url,
 )
 from djangocms_versioning.models import Version
 
@@ -178,7 +179,18 @@ class VersioningToolbar(PlaceholderToolbar):
                     back=self.request.get_full_path(),
                 ))
                 versioning_menu.add_link_item(name, url=url)
-
+        if conf.EXTENDED_MENU and isinstance(conf.EXTENDED_MENU, int):
+            # Show up to conf.EXTENDED_MENU previous versions of the object
+            versions = self._get_all_versions()
+            nearby_versions = versions \
+                                  .annotate(vicinity=(F("pk") - version.pk) * (F("pk") - version.pk)) \
+                                  .order_by("vicinity")[:conf.EXTENDED_MENU]
+            if len(nearby_versions) > 1:
+                submenu = versioning_menu.get_or_create_menu(f"{VERSIONING_MENU_IDENTIFIER}-list", _("View version"))
+                for v in sorted(nearby_versions, key=lambda x: -x.pk):
+                    submenu.add_link_item(_("Version #{number} ({state})").format(
+                        number=v.number, state=v.state
+                    ), url=get_preview_url(v.content), active=(v == version))
     def _get_published_page_version(self):
         """Returns a published page if one exists for the toolbar object
         """
