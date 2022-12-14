@@ -4,6 +4,7 @@ from copy import copy
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_permission_codename
+from django.db.models import F
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.translation import gettext_lazy as _
@@ -191,6 +192,10 @@ class VersioningToolbar(PlaceholderToolbar):
                     submenu.add_link_item(_("Version #{number} ({state})").format(
                         number=v.number, state=v.state
                     ), url=get_preview_url(v.content), active=(v == version))
+
+    def _get_all_versions(self):
+        return Version.objects.filter_by_content_grouping_values(self.toolbar.obj)
+
     def _get_published_page_version(self):
         """Returns a published page if one exists for the toolbar object
         """
