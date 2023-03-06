@@ -2,7 +2,7 @@ import copy
 
 from django.apps import apps
 
-from cms.models import PageContent
+from cms.models import PageContent, Placeholder
 from cms.test_utils.testcases import CMSTestCase
 
 from djangocms_versioning.constants import ARCHIVED, PUBLISHED
@@ -11,6 +11,8 @@ from djangocms_versioning.models import Version
 from djangocms_versioning.test_utils.factories import PollVersionFactory
 from djangocms_versioning.test_utils.people.models import PersonContent
 from djangocms_versioning.test_utils.polls.models import Poll, PollContent
+from djangocms_versioning.test_utils.text.models import Text
+from djangocms_versioning.test_utils.unversioned_editable_app.models import FancyPoll
 
 
 class VersionableItemTestCase(CMSTestCase):
@@ -168,3 +170,57 @@ class VersionableItemProxyModelTestCase(CMSTestCase):
         self.assertEqual(
             id(versionable.version_model_proxy), id(versionable.version_model_proxy)
         )
+
+
+class DefaultCopyTestCase(CMSTestCase):
+    def setUp(self) -> None:
+        self.fancy_poll = FancyPoll(
+            template="mytemplate-to-be-copied.html"
+        )
+        self.fancy_poll.save()
+        placeholder = Placeholder(slot="copythis", default_width=3141592653589323)
+        placeholder.save()
+        self.plugins = [Text(
+                body=f"plugin text {i+1}",
+                position=i+1,
+                language="en",
+                placeholder=placeholder,
+                plugin_type="SimpleTextPlugin",
+            ) for i in range(3)]
+
+        for plugin in self.plugins:
+            placeholder.add_plugin(plugin)
+
+        self.fancy_poll.placeholders.add(placeholder, Placeholder(slot="second placeholder"), bulk=False)
+
+    def tearDown(self) -> None:
+        self.fancy_poll.delete()
+
+    def test_default_copy(self):
+        # Since FancyPoll is not Versioned we have to give it its own _original_manager
+        FancyPoll._original_manager = FancyPoll.objects
+        # Use default_copy
+        copy = default_copy(self.fancy_poll)
+
+        self.assertIsNotNone(copy.pk)  # saved?
+
+        self.assertNotEqual(copy.pk, self.fancy_poll.pk)  # Not the same object
+        self.assertEqual(copy.template, self.fancy_poll.template)  # but the same content
+
+        copied_placeholders = copy.placeholders.all()
+        # One placeholder?
+        self.assertEqual(len(copied_placeholders), 2)
+        copied_placeholder = copied_placeholders.filter(slot="copythis").first()
+        # Placeholder copied?
+        self.assertEqual(copied_placeholder.default_width, 3141592653589323)
+        # Is it actually a new placeholder?
+        self.assertNotEqual(copied_placeholder.pk, self.fancy_poll.placeholders.first().pk)
+
+        copied_plugins = Text.objects.filter(placeholder=copied_placeholder)
+        # All plugins?
+        self.assertEqual(len(copied_plugins), len(self.plugins))
+        # Correctly copied
+        for old, new in zip(copied_plugins, self.plugins):
+            self.assertNotEqual(old.pk, new.pk)  # Different pk
+            self.assertEqual(old.body, new.body)  # Same content
+
