@@ -1,0 +1,8 @@
+-r requirements_base.txt
+
+django-cms>=4.1.0rc2
+
+git+https://github.com/django/django@main#egg=Django
+django-classy-tags
+django-fsm>=2.6
+django-sekizai
