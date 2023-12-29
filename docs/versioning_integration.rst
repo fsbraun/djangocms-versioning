@@ -1,3 +1,5 @@
+.. _versioning_integration:
+
 Integrating Versioning
 ======================
 
@@ -5,17 +7,17 @@ Integrating Versioning
    :maxdepth: 2
    :caption: Quick Start:
 
-Let's say we have an existing `blog` application. To make the `blog` app work with versioning, you would need to take the following steps:
+Let's say we have an existing ``blog`` application. To make the ``blog`` app work with versioning, you would need to take the following steps:
 
-    1. Change the model structure.
-    2. Register the `Post` model for versioning
-    3. (optionally as needed) Implement a custom copy function
-    4. (optionally as needed) Additional/advanced configuration
+1. Change the model structure.
+2. Register the ``Post`` model for versioning
+3. (optionally as needed) Implement a custom copy function
+4. (optionally as needed) Additional/advanced configuration
 
 
 Change the model structure
 ----------------------------
-Assuming that our `blog` app has one db table:
+Assuming that our ``blog`` app has one db table:
 
 .. graphviz::
 
@@ -42,7 +44,7 @@ This would have to change to a db structure like this:
       "Post":"PK_GROUPER_ID"->"PostContent":"FK_POST" [arrowhead = crow];
     }
 
-Or in python code, `models.py` would need to change from:
+Or in python code, ``models.py`` would need to change from:
 
 .. code-block:: python
 
@@ -74,26 +76,26 @@ To:
         title = models.CharField(max_length=100)
         text = models.TextField()
 
-`Post` becomes a :term:`grouper model <grouper model>` and `PostContent` becomes a :term:`content model <content model>`.
+``Post`` becomes a :term:`grouper model <grouper model>` and ``PostContent`` becomes a :term:`content model <content model>`.
 
-Keep in mind that it's not necessary to name the :term:`content model <content model>` `PostContent`,
+Keep in mind that it's not necessary to name the :term:`content model <content model>` ``PostContent``,
 it's just a naming convention. You could name the :term:`content model <content model>`
-`Post` and have `PostGrouper` as the name of :term:`grouper model <grouper model>` or come up with completely different naming.
+``Post`` and have ``PostGrouper`` as the name of :term:`grouper model <grouper model>` or come up with completely different naming.
 
-Once the integration with versioning is complete, versioning will treat `Post` as the object being versioned and `PostContent` as a place
-to store data specific to each version. So every `Post` object will potentially have many `PostContent` objects
-referring to it via the `post` foreign key field. The states of the `PostContent` versions (whether they're published, drafts etc.) are represented
-in a separate model called `Version`, which has what is effectively a one2one relationship with `PostContent`.
+Once the integration with versioning is complete, versioning will treat ``Post`` as the object being versioned and ``PostContent`` as a place
+to store data specific to each version. So every ``Post`` object will potentially have many ``PostContent`` objects
+referring to it via the ``post`` foreign key field. The states of the ``PostContent`` versions (whether they're published, drafts etc.) are represented
+in a separate model called ``Version``, which has what is effectively a one2one relationship with ``PostContent``.
 
 Deciding which fields should be in the :term:`content model <content model>` and which in the :term:`grouper model <grouper model>`
 depends on which data should be versioned and which should not. In this example we're assuming that which site a blog post appears on
 cannot be changed, therefore we would not want to version it (it never changes so there's nothing to version!). But if your project
-assumes that the site can be changed and those changes should be versioned, we would put that field in the `PostContent` model.
+assumes that the site can be changed and those changes should be versioned, we would put that field in the ``PostContent`` model.
 
 Register the model for versioning
 ----------------------------------
 
-Now we need to make versioning aware of these models. So we have to register them in the `cms_config.py` file.
+Now we need to make versioning aware of these models. So we have to register them in the ``cms_config.py`` file.
 A very basic configuration would look like this:
 
 .. code-block:: python
@@ -114,16 +116,17 @@ A very basic configuration would look like this:
             ),
         ]
 
-In this configuration we must specify the :term:`content model <content model>` (`PostContent`),
-the name of the field that is a foreign key to the :term:`grouper model <grouper model>` (`post`)
-and a :term:`copy function <copy function>`. For simple model structures, the `default_copy` function
+In this configuration we must specify the :term:`content model <content model>` (``PostContent``),
+the name of the field that is a foreign key to the :term:`grouper model <grouper model>` (``post``)
+and a :term:`copy function <copy function>`. For simple model structures, the ``default_copy`` function
 which we have used is sufficient, but in many cases you might need to write your own custom :term:`copy function <copy function>`
 (more on that below).
 
 Once a model is registered for versioning its behaviour changes:
 
-1. It's default manager (``Model.objects``) only sees published versions of the model. See :term:``content model``.
-2. It's ``Model.objects.create`` method now will not only create the :term:`content model` but also a corresponding ``Version`` model. Since the ``Version`` model requires a ``User`` object to track who created which version the correct way of creating a versioned :term:`content model` is::
+1. It's default manager (``Model.objects``) only sees published versions of the model. See :term:`content model`.
+2. It's ``Model.objects.create`` method now will not only create the :term:`content model` but also a corresponding ``Version`` model. Since the
+   ``Version`` model requires a ``User`` object to track who created which version the correct way of creating a versioned :term:`content model` is::
 
     Model.objects.with_user(request.user).create(...)
 
@@ -165,26 +168,25 @@ used inside the Django admin (hence its name).
 
 Implement a custom copy function
 ---------------------------------
-Whilst simple model structures should be fine using the `default_copy` function,
-you will most likely need to implement a custom copy function if your :term:`content model <content model>`
-does any of the following:
+Whilst simple model structures should be fine using the ``default_copy`` function, you
+will most likely need to implement a custom copy function if your :term:`content model
+<content model>` does any of the following:
 
-    - Contains any one2one or m2m fields.
-    - Contains a generic foreign key.
-    - Contains a foreign key that relates to an
-      object that should be considered part of the version. For example
-      if you're versioning a poll object, you might consider the answers
-      in the poll as part of a version. If so, you will need to copy
-      the answer objects, not just the poll object. On the other hand if
-      a poll has an fk to a category model, you probably wouldn't consider
-      category as part of the version. In this case the default copy function
-      will take care of this.
-    - Other models have reverse relationships to your content model and
-      should be considered part of the version
+- Contains any one2one or m2m fields.
+- Contains a generic foreign key.
+- Contains a foreign key that relates to an object that should be considered part of the
+  version. For example if you're versioning a poll object, you might consider the
+  answers in the poll as part of a version. If so, you will need to copy the answer
+  objects, not just the poll object. On the other hand if a poll has an fk to a category
+  model, you probably wouldn't consider category as part of the version. In this case
+  the default copy function will take care of this.
+- Other models have reverse relationships to your content model and should be considered
+  part of the version
 
-So let's get back to our example and complicate the model structure a little. Let's say our
-`blog` app supports the use of polls in posts and also our posts can be categorized.
-Now our `blog/models.py` now looks like this:
+So let's get back to our example and complicate the model structure a little. Let's say
+our ``blog`` app supports the use of polls in posts and also our posts can be
+categorized. Now our ``blog/models.py`` now looks like this:
+
 
 .. code-block:: python
 
@@ -218,14 +220,14 @@ Now our `blog/models.py` now looks like this:
         text = models.CharField(max_length=100)
 
 
-If we were using the `default_copy` function on this model structure, versioning wouldn't necessarily do what you expect.
+If we were using the ``default_copy`` function on this model structure, versioning wouldn't necessarily do what you expect.
 Let's take a scenario like this:
 
-    1. A Post object has 2 versions - `version #1` which is archived and `version #2` which is published.
-    2. We revert to `version #1` which creates a draft `version #3`.
-    3. The PostContent data in `version #3` is a copy of what was in `version #1` (the version we reverted to), but the Poll and Answer data is what was there at the time of `version #2` (the latest version).
-    4. We edit both the PostContent, Poll and Answer data on `version #3`.
-    5. The PostContent data is now different in all three versions. However, the poll data is the same in all three versions. This means that the data edit we did on `version #3` (a draft) to Poll and Answer objects is now being displayed on the published site (`version #2` is published).
+1. A Post object has 2 versions - ``version #1`` which is archived and ``version #2`` which is published.
+2. We revert to ``version #1` which creates a draft ``version #3``.
+3. The PostContent data in ``version #3`` is a copy of what was in ``version #1`` (the version we reverted to), but the Poll and Answer data is what was there at the time of ``version #2`` (the latest version).
+4. We edit both the PostContent, Poll and Answer data on ``version #3``.
+5. The PostContent data is now different in all three versions. However, the poll data is the same in all three versions. This means that the data edit we did on ``version #3`` (a draft) to Poll and Answer objects is now being displayed on the published site (``version #2`` is published).
 
 This is probably not how one would want things to work in this scenario, so to fix it, we need to implement a custom :term:`copy function <copy function>` like so:
 
@@ -280,13 +282,15 @@ This is probably not how one would want things to work in this scenario, so to f
         ]
 
 As you can see from the example above the :term:`copy function <copy function>` takes one param (the content object of the version we're copying)
-and returns the copied content object. We have customized it to create not just a new PostContent object (which `default_copy` would have done),
+and returns the copied content object. We have customized it to create not just a new PostContent object (which ``default_copy`` would have done),
 but also new Poll and Answer objects.
 
 .. note::
 
-    A custom copy method will need to use the content model's ``PostContent._original_manager`` to create only a content model object and not also a Version object which the ``PostContent.objects`` manager would have done!
-
+    A custom copy method will need to use the content model's
+    ``PostContent._original_manager`` to create only a content model object and not also
+    a Version object which the ``PostContent.objects`` manager would have done!
+(
 Notice that we have not created new Category objects in this example. This is because the default behaviour actually suits Category objects fine.
 If the name of a category changed, we would not want to revert the whole site to use the old name of the category when reverting a PostContent object.
 
@@ -314,7 +318,7 @@ to add the fields:
         list_display = "title"
 
 The :term:`ExtendedVersionAdminMixin` also has functionality to alter fields from other apps. By adding the :term:`admin_field_modifiers` to a given apps :term:`cms_config`,
-in the form of a dictionary of {model_name: {field: method}}, the admin for the model, will alter the field, using the method provided.
+in the form of a dictionary of ``{model_name: {field: method}}``, the admin for the model, will alter the field, using the method provided.
 
 .. code-block:: python
 
@@ -334,7 +338,7 @@ Given the code sample above, "This is how we add" would be displayed as
 Adding status indicators to a versioned content model
 -----------------------------------------------------
 
-djangocms-versioning provides status indicators for django CMS' content models, you may know them from the page tree in django-cms:
+djangocms-versioning provides status indicators for django CMS' content models, you may know them from the page tree in django CMS:
 
 .. image:: static/Status-indicators.png
     :width: 50%
@@ -389,9 +393,11 @@ Both mixins can be easily combined. If you want both, state indicators and the a
     class MyContentModelAdmin(ExtendedIndicatorVersionAdminMixin, admin.ModelAdmin):
         ...
 
-The versioning state and version list action are replaced by the status indicator and its context menu, respectively.
+The versioning state and version list action are replaced by the status indicator and
+its context menu, respectively.
 
-Add additional actions by overwriting the ``self.get_list_actions()`` method and calling ``super()``.
+Add additional actions by overwriting the ``self.get_list_actions()`` method and calling
+``super()``.
 
 Adding Versioning Entries to a Grouper Model Admin
 --------------------------------------------------
@@ -472,4 +478,5 @@ Summary admin options
 Additional/advanced configuration
 ----------------------------------
 
-The above should be enough configuration for most cases, but versioning has a lot more configuration options. See the :doc:`advanced_configuration` page for details.
+The above should be enough configuration for most cases, but versioning has a lot more
+configuration options. See the :ref:`advanced_configuration` page for details.

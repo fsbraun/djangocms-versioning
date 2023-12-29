@@ -35,6 +35,10 @@ Settings for djangocms Versioning
 
 .. py:attribute:: DJANGOCMS_VERSIONING_LOCK_VERSIONS
 
+   .. versionadded:: 2.0
+
+        Functionality previously part of a separate package djangocms-version-locking.
+
     Defaults to ``False``
 
     This setting controls if draft versions are locked. If they are, only the user

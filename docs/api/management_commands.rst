@@ -4,24 +4,23 @@ Management command
 create_versions
 ---------------
 
-``create_versions`` creates ``Version`` objects for versioned content that does
-not have a version assigned. This happens if djangocms-versioning is added to
-content models after content already has been created. It can also be used as a
-recovery tool if - for whatever reason - some or all ``Version`` objects have
-not been created for a grouper.
+``create_versions`` creates ``Version`` objects for versioned content that does not have
+a version assigned. This happens if djangocms-versioning is added to content models
+after content already has been created. It can also be used as a recovery tool if - for
+whatever reason - some or all ``Version`` objects have not been created for a grouper.
 
-By default, the existing content is assigned the draft status. If a draft
-version already exists the content will be given the archived state.
+By default, the existing content is assigned the draft status. If a draft version
+already exists the content will be given the archived state.
 
-Each version is assigned a user who created the version. When this command is
-run, either
+Each version is assigned a user who created the version. When this command is run,
+either
 
-* the user is taken from the ``DJANGOCMS_VERSIONING_DEFAULT_USER`` setting
-  which must contain the primary key (pk) of the user, or
-* one of the options ``--userid`` or ``--username``
+- the user is taken from the ``DJANGOCMS_VERSIONING_DEFAULT_USER`` setting which must
+  contain the primary key (pk) of the user, or
+- one of the options ``--userid`` or ``--username``
 
-If ``DJANGOCMS_VERSIONING_DEFAULT_USER`` is set it cannot be overridden by a
-command line option.
+If ``DJANGOCMS_VERSIONING_DEFAULT_USER`` is set it cannot be overridden by a command
+line option.
 
 .. code-block:: shell
 
