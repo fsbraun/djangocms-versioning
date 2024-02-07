@@ -108,7 +108,7 @@ class CMSMenu(Menu):
             )
             .order_by("page__node__path", "versions__state")
             .select_related("page", "page__node")
-            .prefetch_related("versions")
+            .prefetch_related("versions", "page__urls")
         )
         added_pages = []
 
