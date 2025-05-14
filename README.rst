@@ -1,4 +1,4 @@
-|django| |djangocms4|
+|django| |djangocms|
 
 *********************
 django CMS Versioning
@@ -33,7 +33,7 @@ Add ``djangocms_versioning`` to your project's ``INSTALLED_APPS``.
 Run::
 
     python -m manage migrate djangocms_versioning
-    python -m manage create_versions --user-id <user-id-of-migration-user> 
+    python -m manage create_versions --userid <user-id-of-migration-user> 
 
 to perform the application's database migrations and (only if you have an existing database) add version objects
 needed to mark existing versions as draft.
@@ -107,5 +107,5 @@ do not forget to run the ``compilemessages`` management command.
 
 .. |django| image:: https://img.shields.io/badge/django-3.2%2B-blue.svg
     :target: https://www.djangoproject.com/
-.. |djangocms4| image:: https://img.shields.io/badge/django%20CMS-4.1-blue.svg
+.. |djangocms| image:: https://img.shields.io/badge/django%20CMS-4.1%2B-blue.svg
     :target: https://www.django-cms.org/
